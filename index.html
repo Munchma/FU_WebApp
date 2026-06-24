@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bayshore Follow-ups</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="config.js"></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <h1>Physio Follow-ups</h1>
+          <p id="summary">Loading patient list...</p>
+        </div>
+        <div class="actions">
+          <button id="refresh" type="button">Refresh</button>
+          <button id="save" type="button">Save</button>
+        </div>
+      </header>
+
+      <section id="setup" class="setup" hidden>
+        <h2>Connect Apps Script</h2>
+        <label for="endpoint">Web app URL</label>
+        <div class="endpoint-row">
+          <input id="endpoint" type="url" autocomplete="off" placeholder="https://script.google.com/macros/s/.../exec">
+          <button id="save-endpoint" type="button">Use URL</button>
+        </div>
+      </section>
+
+      <div id="status" class="status" role="status">Loading...</div>
+
+      <section class="panel">
+        <div class="section-head">
+          <h2>Needs FU Event</h2>
+          <span id="without-count" class="count">0</span>
+        </div>
+        <div id="without"></div>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <h2>FU Event Logged</h2>
+          <span id="with-count" class="count">0</span>
+        </div>
+        <div id="with"></div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

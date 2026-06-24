@@ -1,0 +1,201 @@
+:root {
+  color-scheme: light;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #202124;
+  background: #f6f8fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f6f8fb;
+}
+
+.shell {
+  width: min(1120px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 18px 0 32px;
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 17px;
+}
+
+#summary {
+  margin-top: 6px;
+  color: #5f6368;
+  font-size: 14px;
+}
+
+.actions,
+.endpoint-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+button {
+  border: 1px solid #1f5fbf;
+  border-radius: 6px;
+  padding: 9px 13px;
+  background: #1a73e8;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:first-child {
+  border-color: #c9d2df;
+  background: #fff;
+  color: #202124;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.setup,
+.panel {
+  margin-top: 14px;
+  border: 1px solid #dfe3e8;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.setup {
+  padding: 14px;
+}
+
+.setup label {
+  display: block;
+  margin: 12px 0 6px;
+  color: #5f6368;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+input,
+select {
+  min-height: 36px;
+  border: 1px solid #c9d2df;
+  border-radius: 6px;
+  padding: 6px 8px;
+  background: #fff;
+  font: inherit;
+}
+
+input[type='url'] {
+  width: min(620px, 100%);
+}
+
+.status {
+  min-height: 22px;
+  margin: 8px 0 0;
+  color: #5f6368;
+  font-size: 13px;
+}
+
+.status.error {
+  color: #b3261e;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 14px;
+  border-bottom: 1px solid #edf0f2;
+}
+
+.count {
+  min-width: 28px;
+  border-radius: 999px;
+  padding: 3px 9px;
+  background: #eef3fb;
+  color: #174ea6;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border-bottom: 1px solid #edf0f2;
+  padding: 9px 10px;
+  text-align: left;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+th {
+  background: #f8fafc;
+  color: #3c4043;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+td.patient {
+  font-weight: 700;
+}
+
+.empty {
+  padding: 16px 14px;
+  color: #5f6368;
+}
+
+.changed {
+  background: #fff8e1;
+}
+
+@media (max-width: 720px) {
+  .topbar,
+  .actions,
+  .endpoint-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .actions button,
+  .endpoint-row button {
+    width: 100%;
+  }
+
+  th,
+  td {
+    padding: 8px;
+  }
+}
