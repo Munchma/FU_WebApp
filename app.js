@@ -170,18 +170,20 @@
 
   function rowHtml(row) {
     const originalMode = row.calendarStatus === 'Manual' ? 'manual' : 'auto';
+    const patientName = row.displayName || row.patientName || '';
+    const color = patientColor(patientName);
     return `
-      <tr data-row="${escapeHtml(row.rowNumber)}" data-original-date="${escapeHtml(row.fuDate || '')}" data-original-mode="${originalMode}">
-        <td class="patient">${escapeHtml(row.displayName || row.patientName || '')}</td>
-        <td><input type="date" value="${escapeHtml(row.fuDate || '')}"></td>
-        <td>
+      <tr data-row="${escapeHtml(row.rowNumber)}" data-original-date="${escapeHtml(row.fuDate || '')}" data-original-mode="${originalMode}" style="--patient-color: ${color}">
+        <td class="patient" data-label="Patient"><span class="patient-swatch"></span>${escapeHtml(patientName)}</td>
+        <td data-label="FU Date"><input type="date" value="${escapeHtml(row.fuDate || '')}"></td>
+        <td data-label="Handling">
           <select>
             <option value="auto"${originalMode === 'auto' ? ' selected' : ''}>Create Google event</option>
             <option value="manual"${originalMode === 'manual' ? ' selected' : ''}>Already in calendar</option>
           </select>
         </td>
-        <td>${escapeHtml(row.weeklyAllowance || '')}</td>
-        <td>${escapeHtml(row.calendarStatus || '')}</td>
+        <td data-label="Allowance">${escapeHtml(row.weeklyAllowance || '')}</td>
+        <td data-label="Status">${escapeHtml(row.calendarStatus || '')}</td>
       </tr>
     `;
   }
@@ -200,6 +202,29 @@
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#039;');
+  }
+
+  function patientColor(value) {
+    const colors = [
+      '#1a73e8',
+      '#d93025',
+      '#188038',
+      '#f9ab00',
+      '#9334e6',
+      '#00acc1',
+      '#e8710a',
+      '#5f6368',
+      '#c5221f',
+      '#0b8043',
+      '#b06000',
+      '#3f51b5',
+    ];
+    let hash = 0;
+    const text = String(value || '');
+    for (let i = 0; i < text.length; i++) {
+      hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0;
+    }
+    return colors[Math.abs(hash) % colors.length];
   }
 
   els.refresh.addEventListener('click', load);
