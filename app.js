@@ -173,7 +173,7 @@
   function rowHtml(row) {
     const originalMode = row.calendarStatus === 'Manual' ? 'manual' : 'auto';
     const patientName = row.displayName || row.patientName || '';
-    const allowance = numericAllowance(row.weeklyAllowance);
+    const allowance = numericAllowance(row.weeklyAllowance || row.detectedVisitFrequency);
     const color = patientColor(patientName);
     return `
       <tr data-row="${escapeHtml(row.rowNumber)}" data-original-date="${escapeHtml(row.fuDate || '')}" data-original-mode="${originalMode}" data-original-allowance="${escapeHtml(allowance)}" style="--patient-color: ${color}">
