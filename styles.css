@@ -132,6 +132,10 @@ input[type='url'] {
   width: min(620px, 100%);
 }
 
+input[type='number'] {
+  text-align: center;
+}
+
 .status {
   min-height: 22px;
   margin: 8px 0 0;
@@ -247,6 +251,31 @@ td.patient {
   flex: 0 0 auto;
 }
 
+.allowance-control {
+  display: grid;
+  grid-template-columns: 34px 48px 34px;
+  gap: 6px;
+  align-items: center;
+}
+
+.allowance-control button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-color: #c9d2df;
+  background: #fff;
+  color: #202124;
+  box-shadow: none;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.allowance-control input {
+  width: 48px;
+  min-height: 34px;
+  padding: 4px;
+}
+
 .empty {
   padding: 16px 14px;
   color: var(--muted);
@@ -348,5 +377,19 @@ td.patient {
   input,
   select {
     width: 100%;
+  }
+
+  .allowance-control {
+    grid-template-columns: 42px minmax(58px, 1fr) 42px;
+  }
+
+  .allowance-control button {
+    width: 42px;
+    height: 38px;
+  }
+
+  .allowance-control input {
+    width: 100%;
+    min-height: 38px;
   }
 }
