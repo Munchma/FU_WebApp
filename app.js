@@ -128,11 +128,13 @@
     return Array.from(document.querySelectorAll('[data-row]')).reduce((updates, row) => {
       const fuDate = row.querySelector('input[type="date"]').value;
       const mode = row.querySelector('select').value;
-      if (fuDate !== row.dataset.originalDate || mode !== row.dataset.originalMode) {
+      const weeklyAllowance = row.querySelector('[data-allowance]').value;
+      if (fuDate !== row.dataset.originalDate || mode !== row.dataset.originalMode || weeklyAllowance !== row.dataset.originalAllowance) {
         updates.push({
           rowNumber: row.dataset.row,
           fuDate,
           mode,
+          weeklyAllowance,
         });
       }
       return updates;
@@ -171,9 +173,10 @@
   function rowHtml(row) {
     const originalMode = row.calendarStatus === 'Manual' ? 'manual' : 'auto';
     const patientName = row.displayName || row.patientName || '';
+    const allowance = numericAllowance(row.weeklyAllowance);
     const color = patientColor(patientName);
     return `
-      <tr data-row="${escapeHtml(row.rowNumber)}" data-original-date="${escapeHtml(row.fuDate || '')}" data-original-mode="${originalMode}" style="--patient-color: ${color}">
+      <tr data-row="${escapeHtml(row.rowNumber)}" data-original-date="${escapeHtml(row.fuDate || '')}" data-original-mode="${originalMode}" data-original-allowance="${escapeHtml(allowance)}" style="--patient-color: ${color}">
         <td class="patient" data-label="Patient"><span class="patient-swatch"></span>${escapeHtml(patientName)}</td>
         <td data-label="FU Date"><input type="date" value="${escapeHtml(row.fuDate || '')}"></td>
         <td data-label="Handling">
@@ -182,7 +185,13 @@
             <option value="manual"${originalMode === 'manual' ? ' selected' : ''}>Already in calendar</option>
           </select>
         </td>
-        <td data-label="Allowance">${escapeHtml(row.weeklyAllowance || '')}</td>
+        <td data-label="Allowance">
+          <div class="allowance-control">
+            <button type="button" data-step="-1" aria-label="Decrease weekly visit allowance">-</button>
+            <input data-allowance type="number" min="0" max="7" step="1" value="${escapeHtml(allowance)}">
+            <button type="button" data-step="1" aria-label="Increase weekly visit allowance">+</button>
+          </div>
+        </td>
         <td data-label="Status">${escapeHtml(row.calendarStatus || '')}</td>
       </tr>
     `;
@@ -192,7 +201,18 @@
     const row = event.target.closest('[data-row]');
     const fuDate = row.querySelector('input[type="date"]').value;
     const mode = row.querySelector('select').value;
-    row.classList.toggle('changed', fuDate !== row.dataset.originalDate || mode !== row.dataset.originalMode);
+    const allowance = row.querySelector('[data-allowance]').value;
+    row.classList.toggle('changed', fuDate !== row.dataset.originalDate || mode !== row.dataset.originalMode || allowance !== row.dataset.originalAllowance);
+  }
+
+  function stepAllowance(event) {
+    const button = event.target.closest('[data-step]');
+    if (!button) return;
+    const row = button.closest('[data-row]');
+    const input = row.querySelector('[data-allowance]');
+    const next = Math.min(7, Math.max(0, Number(input.value || 0) + Number(button.dataset.step)));
+    input.value = String(next);
+    markChanged({target: input});
   }
 
   function escapeHtml(value) {
@@ -202,6 +222,11 @@
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#039;');
+  }
+
+  function numericAllowance(value) {
+    const match = String(value || '').match(/\d+/);
+    return match ? String(Number(match[0])) : '';
   }
 
   function patientColor(value) {
@@ -229,6 +254,7 @@
 
   els.refresh.addEventListener('click', load);
   els.save.addEventListener('click', save);
+  document.addEventListener('click', stepAllowance);
   els.saveEndpoint.addEventListener('click', () => {
     setEndpoint(els.endpoint.value);
     load();
