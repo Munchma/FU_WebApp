@@ -159,7 +159,7 @@
 
     target.innerHTML = [
       '<div class="table-wrap"><table>',
-      '<thead><tr><th>Patient</th><th>FU Date</th><th>Handling</th><th>Allowance</th><th>Status</th></tr></thead>',
+      '<thead><tr><th>Patient</th><th>End Date</th><th>FU Date</th><th>Handling</th><th>Allowance</th><th>Status</th></tr></thead>',
       '<tbody>',
       ...rows.map((row) => rowHtml(row)),
       '</tbody></table></div>',
@@ -178,6 +178,7 @@
     return `
       <tr data-row="${escapeHtml(row.rowNumber)}" data-original-date="${escapeHtml(row.fuDate || '')}" data-original-mode="${originalMode}" data-original-allowance="${escapeHtml(allowance)}" style="--patient-color: ${color}">
         <td class="patient" data-label="Patient"><span class="patient-swatch"></span>${escapeHtml(patientName)}</td>
+        <td data-label="End Date"><span class="end-date-pill">${escapeHtml(row.patientEndDate || 'Not refreshed')}</span></td>
         <td data-label="FU Date"><input type="date" value="${escapeHtml(row.fuDate || '')}"></td>
         <td data-label="Handling">
           <select>
