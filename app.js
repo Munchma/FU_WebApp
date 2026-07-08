@@ -178,7 +178,7 @@
     return `
       <tr data-row="${escapeHtml(row.rowNumber)}" data-original-date="${escapeHtml(row.fuDate || '')}" data-original-mode="${originalMode}" data-original-allowance="${escapeHtml(allowance)}" style="--patient-color: ${color}">
         <td class="patient" data-label="Patient"><span class="patient-swatch"></span>${escapeHtml(patientName)}</td>
-        <td data-label="End Date"><span class="end-date-pill">${escapeHtml(row.patientEndDate || 'Not refreshed')}</span></td>
+        <td data-label="End Date"><span class="end-date-pill">${escapeHtml(displayEndDate(row.patientEndDate) || 'Not refreshed')}</span></td>
         <td data-label="FU Date"><input type="date" value="${escapeHtml(row.fuDate || '')}"></td>
         <td data-label="Handling">
           <select>
@@ -228,6 +228,16 @@
   function numericAllowance(value) {
     const match = String(value || '').match(/\d+/);
     return match ? String(Number(match[0])) : '';
+  }
+
+  function displayEndDate(value) {
+    const text = String(value || '').trim();
+    if (!text) return '';
+    const parsed = new Date(text);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString([], {month: 'short', day: 'numeric', year: 'numeric'});
+    }
+    return text.replace(/\s+\d{1,2}:\d{2}:\d{2}.*$/, '');
   }
 
   function patientColor(value) {
