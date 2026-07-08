@@ -253,15 +253,15 @@ td.patient {
 
 .end-date-pill {
   display: inline-flex;
-  min-height: 28px;
   align-items: center;
   border: 1px solid #f6bf55;
   border-radius: 999px;
-  padding: 4px 9px;
+  padding: 2px 7px;
   background: #fff7e0;
   color: #b06000;
   font-size: 13px;
   font-weight: 800;
+  line-height: 1.15;
   white-space: nowrap;
 }
 
