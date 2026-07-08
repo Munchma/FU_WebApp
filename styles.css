@@ -251,6 +251,20 @@ td.patient {
   flex: 0 0 auto;
 }
 
+.end-date-pill {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  border: 1px solid #f6bf55;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: #fff7e0;
+  color: #b06000;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .allowance-control {
   display: grid;
   grid-template-columns: 34px 48px 34px;
