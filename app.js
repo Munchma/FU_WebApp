@@ -1,6 +1,6 @@
 (function () {
   const state = {
-    data: {withoutEvents: [], withEvents: []},
+    data: {withoutEvents: [], withEvents: [], cleared: []},
     busy: false,
   };
 
@@ -14,8 +14,10 @@
     save: document.getElementById('save'),
     without: document.getElementById('without'),
     with: document.getElementById('with'),
+    cleared: document.getElementById('cleared'),
     withoutCount: document.getElementById('without-count'),
     withCount: document.getElementById('with-count'),
+    clearedCount: document.getElementById('cleared-count'),
   };
 
   function configuredEndpoint() {
@@ -93,7 +95,7 @@
     setStatus('Loading...');
     api('patients')
       .then((data) => {
-        state.data = data || {withoutEvents: [], withEvents: []};
+        state.data = data || {withoutEvents: [], withEvents: [], cleared: []};
         render();
         setStatus('Ready');
       })
@@ -116,7 +118,7 @@
     setStatus('Saving...');
     api('saveFollowUps', {updates: JSON.stringify(updates)})
       .then((data) => {
-        state.data = data || {withoutEvents: [], withEvents: []};
+        state.data = data || {withoutEvents: [], withEvents: [], cleared: []};
         render();
         setStatus('Saved.');
       })
@@ -126,8 +128,8 @@
 
   function changedRows() {
     return Array.from(document.querySelectorAll('[data-row]')).reduce((updates, row) => {
-      const fuDate = row.querySelector('input[type="date"]').value;
-      const mode = row.querySelector('select').value;
+      const fuDate = row.querySelector('[data-fu-date]').value;
+      const mode = row.querySelector('[data-mode]').value;
       const weeklyAllowance = row.querySelector('[data-allowance]').value;
       if (fuDate !== row.dataset.originalDate || mode !== row.dataset.originalMode || weeklyAllowance !== row.dataset.originalAllowance) {
         updates.push({
@@ -144,14 +146,17 @@
   function render() {
     const withoutEvents = state.data.withoutEvents || [];
     const withEvents = state.data.withEvents || [];
+    const cleared = state.data.cleared || [];
     els.withoutCount.textContent = String(withoutEvents.length);
     els.withCount.textContent = String(withEvents.length);
-    els.summary.textContent = `${withoutEvents.length} need FU events, ${withEvents.length} already logged.`;
-    renderSection(els.without, withoutEvents);
-    renderSection(els.with, withEvents);
+    els.clearedCount.textContent = String(cleared.length);
+    els.summary.textContent = `${withoutEvents.length} need dates, ${withEvents.length} scheduled, ${cleared.length} cleared.`;
+    renderSection(els.without, withoutEvents, 'needs');
+    renderSection(els.with, withEvents, 'scheduled');
+    renderSection(els.cleared, cleared, 'cleared');
   }
 
-  function renderSection(target, rows) {
+  function renderSection(target, rows, sectionState) {
     if (!rows.length) {
       target.innerHTML = '<div class="empty">No patients in this section.</div>';
       return;
@@ -159,9 +164,9 @@
 
     target.innerHTML = [
       '<div class="table-wrap"><table>',
-      '<thead><tr><th>Patient</th><th>End Date</th><th>FU Date</th><th>Handling</th><th>Allowance</th><th>Status</th></tr></thead>',
+      '<thead><tr><th>Patient</th><th>End Date</th><th>Last FU</th><th>Next FU</th><th>Handling</th><th>Allowance</th><th>Status</th><th>Actions</th></tr></thead>',
       '<tbody>',
-      ...rows.map((row) => rowHtml(row)),
+      ...rows.map((row) => rowHtml(row, sectionState)),
       '</tbody></table></div>',
     ].join('');
 
@@ -170,18 +175,35 @@
     });
   }
 
-  function rowHtml(row) {
+  function rowHtml(row, sectionState) {
     const originalMode = row.calendarStatus === 'Manual' ? 'manual' : 'auto';
     const patientName = row.displayName || row.patientName || '';
     const allowance = numericAllowance(row.weeklyAllowance || row.detectedVisitFrequency);
     const color = patientColor(patientName);
+    const showDateControls = sectionState !== 'cleared';
+    const statusText = sectionState === 'needs'
+      ? 'Needs FU Date'
+      : sectionState === 'cleared'
+        ? 'Cleared'
+        : (row.calendarStatus || 'FU Scheduled');
+    const actions = sectionState === 'needs'
+      ? '<button class="mini-button clear-fu" type="button" data-clear-fu>PT Cleared</button>'
+      : sectionState === 'cleared'
+        ? '<button class="mini-button" type="button" data-schedule-fu>Schedule FU</button>'
+        : '';
     return `
-      <tr data-row="${escapeHtml(row.rowNumber)}" data-original-date="${escapeHtml(row.fuDate || '')}" data-original-mode="${originalMode}" data-original-allowance="${escapeHtml(allowance)}" style="--patient-color: ${color}">
+      <tr class="fu-row fu-${sectionState}${showDateControls ? '' : ' date-collapsed'}" data-row="${escapeHtml(row.rowNumber)}" data-patient="${escapeHtml(row.patientName || patientName)}" data-display-name="${escapeHtml(patientName)}" data-original-date="${escapeHtml(row.fuDate || '')}" data-original-mode="${originalMode}" data-original-allowance="${escapeHtml(allowance)}" style="--patient-color: ${color}">
         <td class="patient" data-label="Patient"><span class="patient-swatch"></span>${escapeHtml(patientName)}</td>
-        <td data-label="End Date"><span class="end-date-pill">${escapeHtml(displayEndDate(row.patientEndDate) || 'Not refreshed')}</span></td>
-        <td data-label="FU Date"><input type="date" value="${escapeHtml(row.fuDate || '')}"></td>
+        <td data-label="End Date">
+          <div class="end-date-cell">
+            <span class="end-date-pill">${escapeHtml(displayEndDate(row.patientEndDate) || 'Not refreshed')}</span>
+            <button class="mini-button override-end" type="button" data-override-end>Early D/C</button>
+          </div>
+        </td>
+        <td data-label="Last FU">${escapeHtml(displayEndDate(row.lastFuDate || row.fuDate) || 'None')}</td>
+        <td data-label="Next FU"><input data-fu-date type="date" value="${escapeHtml(row.fuDate || '')}"></td>
         <td data-label="Handling">
-          <select>
+          <select data-mode>
             <option value="auto"${originalMode === 'auto' ? ' selected' : ''}>Create Google event</option>
             <option value="manual"${originalMode === 'manual' ? ' selected' : ''}>Already in calendar</option>
           </select>
@@ -193,20 +215,92 @@
             <button type="button" data-step="1" aria-label="Increase weekly visit allowance">+</button>
           </div>
         </td>
-        <td data-label="Status">${escapeHtml(row.calendarStatus || '')}</td>
+        <td data-label="Status"><span class="state-pill state-${sectionState}">${escapeHtml(statusText)}</span></td>
+        <td data-label="Actions">${actions}</td>
       </tr>
     `;
   }
 
   function markChanged(event) {
     const row = event.target.closest('[data-row]');
-    const fuDate = row.querySelector('input[type="date"]').value;
-    const mode = row.querySelector('select').value;
+    const fuDate = row.querySelector('[data-fu-date]').value;
+    const mode = row.querySelector('[data-mode]').value;
     const allowance = row.querySelector('[data-allowance]').value;
     row.classList.toggle('changed', fuDate !== row.dataset.originalDate || mode !== row.dataset.originalMode || allowance !== row.dataset.originalAllowance);
   }
 
+  function clearFollowUp(row) {
+    const name = row.dataset.displayName || row.dataset.patient || 'this patient';
+    if (!window.confirm(`Mark ${name} as cleared with no further FU needed?`)) return;
+    setBusy(true);
+    setStatus('Marking cleared...');
+    api('clearFollowUp', {rowNumber: row.dataset.row})
+      .then((data) => {
+        state.data = data || {withoutEvents: [], withEvents: [], cleared: []};
+        render();
+        setStatus('Marked cleared.');
+      })
+      .catch((error) => setStatus(error.message || String(error), true))
+      .finally(() => setBusy(false));
+  }
+
+  function overrideEndDate(row) {
+    const name = row.dataset.displayName || row.dataset.patient || 'this patient';
+    const entered = window.prompt(`Enter early discharge date for ${name} as YYYY-MM-DD:`);
+    if (entered === null) return;
+    const endDate = String(entered || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+      setStatus('Use YYYY-MM-DD for the early discharge date.', true);
+      return;
+    }
+    const message = [
+      `Confirm early discharge override for ${name}?`,
+      `New end date: ${endDate}`,
+      '',
+      'This will move the patient out of Current Patients, flag later calendar events for review, and mark the last in-range calendar event as Last Visit.',
+    ].join('\n');
+    if (!window.confirm(message)) return;
+
+    setBusy(true);
+    setStatus('Applying early discharge override...');
+    api('overrideEndDate', {
+      rowNumber: row.dataset.row,
+      patientName: row.dataset.patient,
+      endDate,
+    })
+      .then((result) => {
+        return api('patients').then((data) => {
+          state.data = data || {withoutEvents: [], withEvents: [], cleared: []};
+          render();
+          return result;
+        });
+      })
+      .then((result) => {
+        const flagged = result && typeof result.futureEventsFlagged === 'number' ? result.futureEventsFlagged : 0;
+        setStatus(`Override saved. ${flagged} future event${flagged === 1 ? '' : 's'} flagged for review.`);
+      })
+      .catch((error) => setStatus(error.message || String(error), true))
+      .finally(() => setBusy(false));
+  }
+
   function stepAllowance(event) {
+    const clearButton = event.target.closest('[data-clear-fu]');
+    if (clearButton) {
+      clearFollowUp(clearButton.closest('[data-row]'));
+      return;
+    }
+    const scheduleButton = event.target.closest('[data-schedule-fu]');
+    if (scheduleButton) {
+      const row = scheduleButton.closest('[data-row]');
+      row.classList.remove('date-collapsed');
+      row.querySelector('[data-fu-date]').focus();
+      return;
+    }
+    const overrideButton = event.target.closest('[data-override-end]');
+    if (overrideButton) {
+      overrideEndDate(overrideButton.closest('[data-row]'));
+      return;
+    }
     const button = event.target.closest('[data-step]');
     if (!button) return;
     const row = button.closest('[data-row]');
