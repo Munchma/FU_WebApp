@@ -10,6 +10,8 @@
   --needs-soft: #fce8e6;
   --logged: #137333;
   --logged-soft: #e6f4ea;
+  --cleared: #5f35b1;
+  --cleared-soft: #f0e8ff;
   --blue: #1a73e8;
 }
 
@@ -188,6 +190,19 @@ input[type='number'] {
   color: #fff;
 }
 
+.panel-cleared {
+  border-top: 5px solid var(--cleared);
+}
+
+.panel-cleared .section-head {
+  background: linear-gradient(90deg, var(--cleared-soft), #fff 70%);
+}
+
+.panel-cleared .count {
+  background: var(--cleared);
+  color: #fff;
+}
+
 .count {
   min-width: 28px;
   border-radius: 999px;
@@ -263,6 +278,63 @@ td.patient {
   font-weight: 800;
   line-height: 1.15;
   white-space: nowrap;
+}
+
+.end-date-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.mini-button {
+  min-height: 28px;
+  border-color: #c9d2df;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: #fff;
+  color: #202124;
+  box-shadow: none;
+  font-size: 12px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.clear-fu {
+  border-color: #8a1c16;
+  background: #b3261e;
+  color: #fff;
+}
+
+.state-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.state-needs {
+  background: var(--needs-soft);
+  color: var(--needs);
+}
+
+.state-scheduled {
+  background: var(--logged-soft);
+  color: var(--logged);
+}
+
+.state-cleared {
+  background: var(--cleared-soft);
+  color: var(--cleared);
+}
+
+.date-collapsed [data-label='Next FU'],
+.date-collapsed [data-label='Handling'] {
+  display: none;
 }
 
 .allowance-control {
