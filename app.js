@@ -200,7 +200,7 @@
             <button class="mini-button override-end" type="button" data-override-end>Early D/C</button>
           </div>
         </td>
-        <td data-label="Last FU">${escapeHtml(displayEndDate(row.lastFuDate || row.fuDate) || 'None')}</td>
+        <td data-label="Last FU">${escapeHtml(displayEndDate(row.lastFuDate) || 'None')}</td>
         <td data-label="Next FU"><input data-fu-date type="date" value="${escapeHtml(row.fuDate || '')}"></td>
         <td data-label="Handling">
           <select data-mode>
