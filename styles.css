@@ -334,7 +334,7 @@ td.patient {
 
 .date-collapsed [data-label='Next FU'],
 .date-collapsed [data-label='Handling'] {
-  display: none;
+  visibility: hidden;
 }
 
 .allowance-control {
@@ -372,6 +372,10 @@ td.patient {
 }
 
 @media (max-width: 720px) {
+  .date-collapsed [data-label='Next FU'],
+  .date-collapsed [data-label='Handling'] {
+    display: none;
+  }
   .topbar,
   .actions,
   .endpoint-row {
