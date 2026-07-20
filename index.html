@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Bayshore Follow-ups</title>
-    <link rel="stylesheet" href="styles.css?v=fu-2">
+    <link rel="stylesheet" href="styles.css?v=fu-3">
     <script src="config.js"></script>
   </head>
   <body>
@@ -63,8 +63,19 @@
         </div>
         <div id="cleared"></div>
       </section>
+
+      <section class="panel panel-discharge">
+        <div class="section-head">
+          <div>
+            <h2>Possible Discharges</h2>
+            <p>Inactive patients who still have future Bayshore calendar visits. Confirm the effective date before anything is removed.</p>
+          </div>
+          <span id="discharge-count" class="count">0</span>
+        </div>
+        <div id="discharges"></div>
+      </section>
     </main>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=fu-3"></script>
   </body>
 </html>
