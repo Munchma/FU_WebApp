@@ -1,6 +1,6 @@
 (function () {
   const state = {
-    data: {withoutEvents: [], withEvents: [], cleared: []},
+    data: {withoutEvents: [], withEvents: [], cleared: [], pendingDischarges: []},
     busy: false,
   };
 
@@ -15,9 +15,11 @@
     without: document.getElementById('without'),
     with: document.getElementById('with'),
     cleared: document.getElementById('cleared'),
+    discharges: document.getElementById('discharges'),
     withoutCount: document.getElementById('without-count'),
     withCount: document.getElementById('with-count'),
     clearedCount: document.getElementById('cleared-count'),
+    dischargeCount: document.getElementById('discharge-count'),
   };
 
   function configuredEndpoint() {
@@ -147,13 +149,73 @@
     const withoutEvents = state.data.withoutEvents || [];
     const withEvents = state.data.withEvents || [];
     const cleared = state.data.cleared || [];
+    const pendingDischarges = state.data.pendingDischarges || [];
     els.withoutCount.textContent = String(withoutEvents.length);
     els.withCount.textContent = String(withEvents.length);
     els.clearedCount.textContent = String(cleared.length);
-    els.summary.textContent = `${withoutEvents.length} need dates, ${withEvents.length} scheduled, ${cleared.length} cleared.`;
+    els.dischargeCount.textContent = String(pendingDischarges.length);
+    els.summary.textContent = `${withoutEvents.length} need dates, ${withEvents.length} scheduled, ${cleared.length} cleared, ${pendingDischarges.length} possible discharge${pendingDischarges.length === 1 ? '' : 's'}.`;
     renderSection(els.without, withoutEvents, 'needs');
     renderSection(els.with, withEvents, 'scheduled');
     renderSection(els.cleared, cleared, 'cleared');
+    renderPendingDischarges(pendingDischarges);
+  }
+
+  function renderPendingDischarges(rows) {
+    if (!rows.length) {
+      els.discharges.innerHTML = '<div class="empty">No possible discharges detected.</div>';
+      return;
+    }
+    els.discharges.innerHTML = [
+      '<div class="discharge-list">',
+      ...rows.map((row) => `
+        <article class="discharge-card" data-discharge-patient="${escapeHtml(row.patientName)}">
+          <div>
+            <strong>${escapeHtml(row.displayName || row.patientName)}</strong>
+            <p>${escapeHtml(row.futureEventCount)} future managed visit${Number(row.futureEventCount) === 1 ? '' : 's'} remain; first is ${escapeHtml(displayEndDate(row.firstFutureVisitDate))}.</p>
+          </div>
+          <label>Effective discharge date
+            <input data-discharge-date type="date" value="${escapeHtml(row.detectedDate || '')}">
+          </label>
+          <button class="danger-button" type="button" data-confirm-discharge>Confirm patient discharged</button>
+        </article>
+      `),
+      '</div>',
+    ].join('');
+  }
+
+  function confirmDischarge(card) {
+    const patientName = card.dataset.dischargePatient;
+    const displayName = card.querySelector('strong').textContent || patientName;
+    const endDate = card.querySelector('[data-discharge-date]').value;
+    if (!endDate) {
+      setStatus('Choose the effective discharge date first.', true);
+      return;
+    }
+    const message = [
+      `Confirm ${displayName} discharged on ${endDate}?`,
+      '',
+      'This will mark the patient inactive and permanently delete linked Bayshore calendar visits on and after that date.',
+      'Unrelated calendar events will not be touched.',
+    ].join('\n');
+    if (!window.confirm(message)) return;
+
+    setBusy(true);
+    setStatus('Confirming discharge and removing future visits...');
+    api('confirmDischarge', {patientName, endDate})
+      .then((result) => api('patients').then((data) => {
+        state.data = data || {withoutEvents: [], withEvents: [], cleared: [], pendingDischarges: []};
+        render();
+        return result;
+      }))
+      .then((result) => {
+        const visits = Number(result && result.futureEventsRemoved || 0);
+        const followUps = Number(result && result.followUpEventsRemoved || 0);
+        const followUpText = followUps ? ` and ${followUps} FU event${followUps === 1 ? '' : 's'}` : '';
+        setStatus(`Discharge confirmed. Removed ${visits} future visit${visits === 1 ? '' : 's'}${followUpText}.`);
+      })
+      .catch((error) => setStatus(error.message || String(error), true))
+      .finally(() => setBusy(false));
   }
 
   function renderSection(target, rows, sectionState) {
@@ -284,6 +346,11 @@
   }
 
   function stepAllowance(event) {
+    const dischargeButton = event.target.closest('[data-confirm-discharge]');
+    if (dischargeButton) {
+      confirmDischarge(dischargeButton.closest('[data-discharge-patient]'));
+      return;
+    }
     const clearButton = event.target.closest('[data-clear-fu]');
     if (clearButton) {
       clearFollowUp(clearButton.closest('[data-row]'));

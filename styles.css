@@ -13,6 +13,8 @@
   --cleared: #5f35b1;
   --cleared-soft: #f0e8ff;
   --blue: #1a73e8;
+  --discharge: #b06000;
+  --discharge-soft: #fff3e0;
 }
 
 * {
@@ -203,6 +205,61 @@ input[type='number'] {
   color: #fff;
 }
 
+.panel-discharge {
+  border-top: 5px solid var(--discharge);
+}
+
+.panel-discharge .section-head {
+  background: linear-gradient(90deg, var(--discharge-soft), #fff 70%);
+}
+
+.panel-discharge .count {
+  background: var(--discharge);
+  color: #fff;
+}
+
+.discharge-list {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.discharge-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 230px) auto;
+  gap: 14px;
+  align-items: end;
+  border: 1px solid #efd4ad;
+  border-left: 6px solid var(--discharge);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fffaf2;
+}
+
+.discharge-card strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+
+.discharge-card p,
+.discharge-card label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.discharge-card label {
+  display: grid;
+  gap: 5px;
+  font-weight: 700;
+}
+
+button.danger-button {
+  border-color: #8f1d16;
+  background: #b3261e;
+  color: #fff;
+}
+
 .count {
   min-width: 28px;
   border-radius: 999px;
@@ -372,6 +429,10 @@ td.patient {
 }
 
 @media (max-width: 720px) {
+  .discharge-card {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
   .date-collapsed [data-label='Next FU'],
   .date-collapsed [data-label='Handling'] {
     display: none;
