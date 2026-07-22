@@ -1,6 +1,6 @@
 (function () {
   const state = {
-    data: {withoutEvents: [], withEvents: [], cleared: [], pendingDischarges: []},
+    data: {withoutEvents: [], withEvents: [], cleared: [], temporary: [], pendingDischarges: []},
     busy: false,
   };
 
@@ -13,10 +13,12 @@
     refresh: document.getElementById('refresh'),
     save: document.getElementById('save'),
     without: document.getElementById('without'),
+    temporary: document.getElementById('temporary'),
     with: document.getElementById('with'),
     cleared: document.getElementById('cleared'),
     discharges: document.getElementById('discharges'),
     withoutCount: document.getElementById('without-count'),
+    temporaryCount: document.getElementById('temporary-count'),
     withCount: document.getElementById('with-count'),
     clearedCount: document.getElementById('cleared-count'),
     dischargeCount: document.getElementById('discharge-count'),
@@ -133,12 +135,14 @@
       const fuDate = row.querySelector('[data-fu-date]').value;
       const mode = row.querySelector('[data-mode]').value;
       const weeklyAllowance = row.querySelector('[data-allowance]').value;
-      if (fuDate !== row.dataset.originalDate || mode !== row.dataset.originalMode || weeklyAllowance !== row.dataset.originalAllowance) {
+      const assignmentState = row.querySelector('[data-assignment-state]').value;
+      if (fuDate !== row.dataset.originalDate || mode !== row.dataset.originalMode || weeklyAllowance !== row.dataset.originalAllowance || assignmentState !== row.dataset.originalAssignment) {
         updates.push({
           rowNumber: row.dataset.row,
           fuDate,
           mode,
           weeklyAllowance,
+          assignmentState,
         });
       }
       return updates;
@@ -149,15 +153,18 @@
     const withoutEvents = state.data.withoutEvents || [];
     const withEvents = state.data.withEvents || [];
     const cleared = state.data.cleared || [];
+    const temporary = state.data.temporary || [];
     const pendingDischarges = state.data.pendingDischarges || [];
     els.withoutCount.textContent = String(withoutEvents.length);
     els.withCount.textContent = String(withEvents.length);
     els.clearedCount.textContent = String(cleared.length);
+    els.temporaryCount.textContent = String(temporary.length);
     els.dischargeCount.textContent = String(pendingDischarges.length);
-    els.summary.textContent = `${withoutEvents.length} need dates, ${withEvents.length} scheduled, ${cleared.length} cleared, ${pendingDischarges.length} possible discharge${pendingDischarges.length === 1 ? '' : 's'}.`;
+    els.summary.textContent = `${withoutEvents.length} regular patients need dates, ${withEvents.length} scheduled, ${temporary.length} temporary/provisional, ${cleared.length} cleared, ${pendingDischarges.length} possible discharge${pendingDischarges.length === 1 ? '' : 's'}.`;
     renderSection(els.without, withoutEvents, 'needs');
     renderSection(els.with, withEvents, 'scheduled');
     renderSection(els.cleared, cleared, 'cleared');
+    renderSection(els.temporary, temporary, 'temporary');
     renderPendingDischarges(pendingDischarges);
   }
 
@@ -172,7 +179,7 @@
         <article class="discharge-card" data-discharge-patient="${escapeHtml(row.patientName)}">
           <div>
             <strong>${escapeHtml(row.displayName || row.patientName)}</strong>
-            <p>${escapeHtml(row.futureEventCount)} future managed visit${Number(row.futureEventCount) === 1 ? '' : 's'} remain; first is ${escapeHtml(displayEndDate(row.firstFutureVisitDate))}.</p>
+            <p>${escapeHtml(row.cleanupReason || 'Possible discharge')}: ${escapeHtml(row.futureEventCount)} future managed visit${Number(row.futureEventCount) === 1 ? '' : 's'} remain; first is ${escapeHtml(displayEndDate(row.firstFutureVisitDate))}.</p>
           </div>
           <label>Effective discharge date
             <input data-discharge-date type="date" value="${escapeHtml(row.detectedDate || '')}">
@@ -226,7 +233,7 @@
 
     target.innerHTML = [
       '<div class="table-wrap"><table>',
-      '<thead><tr><th>Patient</th><th>End Date</th><th>Last FU</th><th>Next FU</th><th>Handling</th><th>Allowance</th><th>Status</th><th>Actions</th></tr></thead>',
+      '<thead><tr><th>Patient</th><th>Assignment</th><th>End Date</th><th>Last FU</th><th>Next FU</th><th>Handling</th><th>Allowance</th><th>Status</th><th>Actions</th></tr></thead>',
       '<tbody>',
       ...rows.map((row) => rowHtml(row, sectionState)),
       '</tbody></table></div>',
@@ -241,21 +248,29 @@
     const originalMode = row.calendarStatus === 'Manual' ? 'manual' : 'auto';
     const patientName = row.displayName || row.patientName || '';
     const allowance = numericAllowance(row.weeklyAllowance || row.detectedVisitFrequency);
+    const assignmentState = row.assignmentState || 'Provisional / Unknown';
     const color = patientColor(patientName);
     const showDateControls = sectionState !== 'cleared';
     const statusText = sectionState === 'needs'
       ? 'Needs FU Date'
       : sectionState === 'cleared'
         ? 'Cleared'
-        : (row.calendarStatus || 'FU Scheduled');
+        : sectionState === 'temporary'
+          ? `${assignmentState} · ${row.followUpState || 'needs'}`
+          : (row.calendarStatus || 'FU Scheduled');
     const actions = sectionState === 'needs'
       ? '<button class="mini-button clear-fu" type="button" data-clear-fu>PT Cleared</button>'
       : sectionState === 'cleared'
         ? '<button class="mini-button" type="button" data-schedule-fu>Schedule FU</button>'
         : '';
     return `
-      <tr class="fu-row fu-${sectionState}${showDateControls ? '' : ' date-collapsed'}" data-row="${escapeHtml(row.rowNumber)}" data-patient="${escapeHtml(row.patientName || patientName)}" data-display-name="${escapeHtml(patientName)}" data-original-date="${escapeHtml(row.fuDate || '')}" data-original-mode="${originalMode}" data-original-allowance="${escapeHtml(allowance)}" style="--patient-color: ${color}">
+      <tr class="fu-row fu-${sectionState}${showDateControls ? '' : ' date-collapsed'}" data-row="${escapeHtml(row.rowNumber)}" data-patient="${escapeHtml(row.patientName || patientName)}" data-display-name="${escapeHtml(patientName)}" data-original-date="${escapeHtml(row.fuDate || '')}" data-original-mode="${originalMode}" data-original-allowance="${escapeHtml(allowance)}" data-original-assignment="${escapeHtml(assignmentState)}" style="--patient-color: ${color}">
         <td class="patient" data-label="Patient"><span class="patient-swatch"></span>${escapeHtml(patientName)}</td>
+        <td data-label="Assignment">
+          <select data-assignment-state>
+            ${['Regular', 'Coverage', 'PT Assessment Helper', 'Provisional / Unknown'].map((option) => `<option value="${option}"${assignmentState === option ? ' selected' : ''}>${option}</option>`).join('')}
+          </select>
+        </td>
         <td data-label="End Date">
           <div class="end-date-cell">
             <span class="end-date-pill">${escapeHtml(displayEndDate(row.patientEndDate) || 'Not refreshed')}</span>
@@ -288,7 +303,8 @@
     const fuDate = row.querySelector('[data-fu-date]').value;
     const mode = row.querySelector('[data-mode]').value;
     const allowance = row.querySelector('[data-allowance]').value;
-    row.classList.toggle('changed', fuDate !== row.dataset.originalDate || mode !== row.dataset.originalMode || allowance !== row.dataset.originalAllowance);
+    const assignmentState = row.querySelector('[data-assignment-state]').value;
+    row.classList.toggle('changed', fuDate !== row.dataset.originalDate || mode !== row.dataset.originalMode || allowance !== row.dataset.originalAllowance || assignmentState !== row.dataset.originalAssignment);
   }
 
   function clearFollowUp(row) {
@@ -319,7 +335,7 @@
       `Confirm early discharge override for ${name}?`,
       `New end date: ${endDate}`,
       '',
-      'This will move the patient out of Current Patients, flag later calendar events for review, and mark the last in-range calendar event as Last Visit.',
+      'This will move the patient out of Current Patients, permanently remove linked Bayshore calendar events on and after this date, and clear the patient from active planning views.',
     ].join('\n');
     if (!window.confirm(message)) return;
 
@@ -338,8 +354,8 @@
         });
       })
       .then((result) => {
-        const flagged = result && typeof result.futureEventsFlagged === 'number' ? result.futureEventsFlagged : 0;
-        setStatus(`Override saved. ${flagged} future event${flagged === 1 ? '' : 's'} flagged for review.`);
+        const removed = result && typeof result.futureEventsRemoved === 'number' ? result.futureEventsRemoved : 0;
+        setStatus(`Early discharge saved. ${removed} future event${removed === 1 ? '' : 's'} removed; active planning views rebuilt.`);
       })
       .catch((error) => setStatus(error.message || String(error), true))
       .finally(() => setBusy(false));
